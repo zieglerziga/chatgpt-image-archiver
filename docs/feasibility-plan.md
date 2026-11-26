@@ -16,15 +16,18 @@ Inspect normal web controls for individual download, multi-select download, indi
 
 ### Priority investigation — Repeated native batches
 
-The user reports that selecting 500 images in Chrome triggered individual downloads into a preconfigured folder. The proposed workflow targets about 100 images per batch, verifies the batch, removes the corresponding remote targets, refreshes, and repeats. This may avoid the gallery's repeatable scrolling boundary; its ability to expose older items after deletion remains unproven.
+The user reports a 500-image native Chrome batch and a later finished Firefox run. The Firefox screenshot establishes a Space image list with Download and Delete controls and 703 currently selected items; a local inventory subsequently found 703 image files. Selection disappeared after the run while the images remained listed. Matching the archived files to their source items and restoring the exact selection is now the first feasibility priority.
 
-1. Identify the exact interface used for the 500-item selection and what selection-based deletion, if any, actually removes.
-2. Establish how selected source identities map to individual downloads despite different start/completion order, duplicate names, and unrelated browser downloads.
+The proposed workflow targets about 100 images per batch, verifies and reconciles the batch, restores its verified source selection, removes those targets, refreshes, and repeats. This may avoid the gallery's scrolling boundary; exposing older items after deletion remains unproven.
+
+1. Establish stable Space item references and durably record a small selected set before Download. Demonstrate exact reselection after native selection is cleared, after reload, and after a list-order change. A first-N-rows strategy is insufficient.
+2. Establish how those source identities map to individual downloads despite different start/completion order, duplicate names, and unrelated browser downloads. Preserve the trigger-time batch set even if the current toolbar count changes.
 3. Validate native file quality and establish completion and local-verification signals. Do not treat the number of started downloads as proof that the batch is archived.
 4. During a later authorized controlled cleanup test, verify whether previously unseen items become reachable after removal and refresh. Perform deletion tests only after their required files are verified. Do not remove valuable content merely to diagnose scrolling.
 5. If chat deletion is required, establish all generated outputs in each selected chat, including edits and alternate branches. Treat about 100 as a target that can expand to include whole chats.
 6. Define checkpoints between selection, downloading, verification, cleanup, and refresh. A restarted run must reconcile its current batch before treating items as new.
 7. Evaluate conversation-based discovery if the loop stops advancing. Older images are known to open from their chats, but reliable traversal of conversation history still needs evidence.
+8. Inspect what Space's visible Delete control actually removes and whether chat copies or saved references remain. Support saved-file-only cleanup without requiring an unrelated full chat scan.
 
 **Decision:** prefer the native batch loop if source mapping, verification, cleanup semantics, and replenishment are demonstrated. Otherwise assess conversation-based discovery. Selecting another browser framework is not proof that either discovery problem is solved.
 
@@ -43,6 +46,7 @@ Inspect how source identifiers connect gallery items, file downloads, saved copi
 | Finding | Proposed decision |
 | --- | --- |
 | Native batches cover originals and preserve enough source mapping | Build only local verification, inventory, and cleanup planning around those downloads |
+| A recorded manifest restores exact source selection after native selection loss | Continue evaluating batch cleanup; this is required before automatic deletion |
 | Verified batch cleanup and refresh expose unseen older items | Use the repeated batch loop without requiring full-account discovery first |
 | Conversation history reaches older content that the gallery omits | Prefer conversation-based discovery if history traversal and per-chat image coverage can be established |
 | Native batches leave gaps, but an extension can drive the required UI and track native downloads reliably | Prefer the extension if its permissions, browser lifecycle, and durable state are manageable |
@@ -71,7 +75,7 @@ The image archive is the deliverable. A small operational catalog may track sour
 
 ## Future validation
 
-Use synthetic fixtures for failures that should not be tested on valuable account data: truncated files, HTML error downloads, duplicate names, interrupted writes, changed hashes, disk exhaustion, identity mismatches, and crashes around deletion acknowledgments. If ZIP input is selected, include corrupt archives and unsafe member paths.
+Use synthetic fixtures for failures that should not be tested on valuable account data: truncated files, HTML error downloads, duplicate names, interrupted writes, changed hashes, disk exhaustion, identity mismatches, lost selection, reordered lists, and crashes around deletion acknowledgments. If ZIP input is selected, include corrupt archives and unsafe member paths.
 
 Use a controlled test chat created for that purpose before any real deletion test. Verify that all its generated outputs are local, that cleanup removes the intended target, and that a deliberately unresolved output blocks deletion. Saved-file cleanup requires a separate test because its effects differ from chat deletion.
 
@@ -83,8 +87,9 @@ Run a synthetic inventory of at least 10,000 items to assess progress persistenc
 - Installed browser and preferred account-switching workflow.
 - Coverage of other accounts and of Library or Space beyond the observed gallery failure.
 - Whether conversation history can be enumerated reliably beyond the known gallery stopping point. The gallery is already known to omit some accessible older images.
-- Maximum native batch size (500 has been observed), output format, and original-image coverage.
-- Which interface supplied the observed 500-item download and whether it supports selection-based deletion.
+- Maximum native batch size, format coverage, and original-image integrity. Chrome 500 and a finished Firefox run with 703 locally inventoried images are observed outcomes, not measured limits.
+- What the observed Space Delete control actually removes and whether chat representations remain.
+- Stable source-to-file mapping and exact selection recovery after the observed Firefox selection loss.
 - Whether cleanup and refresh expose unseen items beyond the gallery boundary.
 - Whether stable source identifiers are exposed by the normal UI.
 - Behavior of hidden branches and separately saved copies.

@@ -32,19 +32,27 @@ OpenAI documents finding older chats through search even when they are no longer
 
 ## Native batch download and the proposed loop
 
-**User evidence:** with the download folder configured beforehand, selecting 500 images in Chrome triggered 500 individual downloads. Native multi-selection and downloading therefore work for the observed interface. The exact interface and its deletion controls remain to be identified. This is not an established maximum, a guarantee of original-file quality, or an independent verification of each resulting file.
+**User evidence:** with the download folder configured beforehand, selecting 500 images in Chrome triggered 500 individual downloads. A later Firefox run was reported as 704 selected; its screenshot shows 703 currently selected at `chatgpt.com/space?category=images`. The Space list visibly offers native Download and Delete controls. Several browser download entries were marked complete. The earlier Chrome surface has not been separately identified.
+
+The user subsequently reported that the Firefox run finished, its selection disappeared, and the images remained in the list. A read-only inspection of the local downloads directory found 703 image files totaling 1,717,714,337 bytes, with no `.part` or `.crdownload` files. That count agrees with the screenshot's visible selection count. It does not prove the exact trigger-time selection, original-file integrity, or source-to-file correspondence. The collection's previous folder contents were not recorded.
+
+**Observed failure:** the native workflow loses the record connecting a completed download batch to its source selection. Native downloading is available; identifying and reselecting precisely what was archived is the immediate feasibility question. No maximum batch size has been established.
 
 **User proposal:** work in batches of about 100 images, delete the finished batch, and iterate.
 
-**Leading approach:** reuse native batch downloading and add source-to-file accounting, completion monitoring, local verification, cleanup coordination, and durable progress. Test whether removing a verified batch and refreshing exposes older items without deep scrolling. If it does, exhaustive account discovery is not a prerequisite for processing each batch. That replenishment behavior is still a hypothesis.
+**Leading approach:** save a manifest before triggering native downloads, match and verify each file, then restore exact verified cleanup targets from that manifest. A smaller batch reduces the amount to reconcile but does not solve selection loss. Test whether removing a verified batch and refreshing exposes older items without deep scrolling. If it does, exhaustive account discovery is not a prerequisite for processing each batch. That replenishment behavior is still a hypothesis.
 
 Chrome's extension downloads API can monitor downloads using its `downloads` permission. It distinguishes a download's creation from later state changes, including completion and interruption, and exposes download identifiers and filenames. This supports evaluating an extension monitor; it does not establish how ChatGPT source items map to downloads or provide local image validation by itself. [Chrome downloads API](https://developer.chrome.com/docs/extensions/reference/api/downloads).
 
-If cleanup requires deleting containing chats, batch sizing must include whole verified chats. If a native image selection also offers deletion, establish whether it deletes a saved file, only removes a gallery entry, or has other effects before choosing that route.
+Firefox also documents a WebExtensions downloads API with download-manager queries and creation/change events. Both browsers remain candidates; native success does not prove that an automated integration behaves identically in each. [Mozilla downloads API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads).
+
+The screenshot confirms that native Space selection offers Delete. Its confirmation text, actual saved-file effects, and behavior after refresh still need observation. If cleanup requires deleting containing chats, batch sizing must include whole verified chats.
 
 ## Chat deletion
 
-OpenAI documents individual chat deletion and a native “Delete all chats” control. Deleted chats cannot be restored through ChatGPT or Support. Chat deletion does not remove separately saved Library or Space files. Removal from the account UI and permanent backend deletion are different events, with retention exceptions described by OpenAI. [Deleting and archiving chats in ChatGPT](https://help.openai.com/en/articles/8809935-deleting-and-archiving-chats-in-chatgpt).
+OpenAI documents individual chat deletion and a native “Delete all chats” control. Deleted chats cannot be restored through ChatGPT or Support. Removal from the account UI and permanent backend deletion are different events, with retention exceptions described by OpenAI. [Deleting and archiving chats in ChatGPT](https://help.openai.com/en/articles/8809935-deleting-and-archiving-chats-in-chatgpt).
+
+The retention guide says chat deletion may offer an “Also delete files uploaded or created in this chat” checkbox. Selecting it moves eligible files to Trash; separately saved files remain if the option is absent or cleared. Inspect the actual dialog and target scope. [Chat and file retention in ChatGPT](https://help.openai.com/en/articles/8983778-chat-and-file-retention-in-chatgpt).
 
 **Project choice:** targeted conversation deletion is an acceptable cleanup route. Native selection-based image/file cleanup may be simpler if its controls and actual effects are established. Native account-wide deletion could reduce work later, but requires an explicit account-wide scope and stronger coverage evidence than a successful subset download. It is excluded from the first version.
 
@@ -66,7 +74,7 @@ The following is an engineering assessment, not a claim that any method has alre
 
 | Approach | Potential benefit | Main unresolved issue | Current position |
 | --- | --- | --- | --- |
-| Native batch download, followed by local verification and repeated cleanup | Reuses the user's demonstrated Chrome workflow | Exact interface, original variants, source mapping, deletion semantics, and whether older items become reachable | Leading acquisition candidate; 500-item selection observed |
+| Native batch download, followed by local verification and repeated cleanup | Reuses the demonstrated Chrome and Firefox workflows | Restoring selection from source identities, original variants, download mapping, deletion semantics, and whether older items become reachable | Leading candidate; Firefox Space controls observed and 703 local image files inventoried |
 | Custom extension in the existing browser | Uses the current browser session and could capture native download results | Browser-specific permissions, durable progress, UI changes, account isolation, terms risk | Candidate |
 | External visible browser controller | Can coordinate navigation, file verification, progress, and cleanup | CachyOS compatibility, login behavior, UI changes, terms risk | Candidate; Playwright is one possible tool |
 | Export recovery plus local import | Offline processing after a single official download | Previous delivery failure and unproven original-image coverage | Optional fallback |
@@ -76,7 +84,7 @@ Undocumented API scraping and stealth tooling are outside the proposed scope. Th
 
 ## Decisions still open
 
-1. Which interface supplied the 500-item selection, and does it offer selection-based deletion?
+1. Which stable Space item references can be saved before Download and matched to local files, so exact verified targets can be reselected after native selection disappears?
 2. Does removing a verified batch and refreshing expose previously unreachable older items?
 3. If automation is needed, is an extension or an external controller the better fit for the installed browser and CachyOS environment?
 4. Which identifiers and variant mappings establish the original image and its containing chat?
