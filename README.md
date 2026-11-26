@@ -12,10 +12,14 @@ Draft specification for recovering approximately 5,000–6,000 generated images 
 - Recover from interruptions without losing progress or repeatedly downloading completed images.
 - Verify the local archive before remote cleanup.
 - Do not depend on receiving an account export: an EU account export was requested more than seven days ago and no email arrived.
+- The image gallery stops loading around the same point after a refresh while the page remains responsive. Older images still open from their containing chats.
+- The user has downloaded a selection of 500 images through Chrome, with a preconfigured destination folder and 500 individual download events.
 
 ## Working direction
 
-Evaluate native bulk downloads first, where they cover the required images. A browser-driven downloader is the leading candidate for gaps and accounts without suitable bulk controls. Export and Privacy Portal recovery remain optional alternatives.
+The leading proposal is a repeated batch workflow targeting about 100 images: select reachable items, use native downloading, verify the files, remove the verified remote targets, refresh, and repeat. The successful 500-image selection demonstrates that native batch downloading is available on at least one account; 500 is an observed size, not an established limit.
+
+First verify which interface supplied that selection, what its deletion controls actually remove, and whether cleanup exposes previously unreachable items. Full-account discovery need not precede every batch, but each deletion target must be fully accounted for. If deletion requires removing a chat, the batch must include all its generated images even when this exceeds the target size. Conversation-based discovery remains a fallback if the batch loop cannot progress. Export and Privacy Portal recovery remain optional alternatives.
 
 Select the browser integration after checking the actual account UI. A custom extension and an external browser controller are both candidates. Human-like browser actions do not provide a guarantee against account restrictions; the relevant terms and technical limitations are recorded in the evidence notes.
 

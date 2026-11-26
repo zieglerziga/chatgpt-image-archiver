@@ -1,6 +1,6 @@
 # Product specification
 
-Draft 0.1 — 2026-11-26
+Draft 0.2 — 2026-11-26
 
 ## Purpose
 
@@ -16,6 +16,9 @@ Recover the user's generated ChatGPT images onto a CachyOS Linux host, verify th
 | Accounts | Several user-owned ChatGPT accounts |
 | Platform | CachyOS Linux |
 | Existing export attempt | No email after more than seven days; EU account |
+| Gallery failure | Loading stops around the same point after a refresh; the page stays responsive |
+| Older images | Images beyond the gallery stopping point still open from their containing chats |
+| Native download capability | User downloaded a selection of 500 images in Chrome, producing individual download events |
 | Current work | Specification and approach selection only |
 
 ## Scope
@@ -28,22 +31,29 @@ Do not generate new images, delete accounts, or modify unrelated account setting
 
 ## User workflow
 
-1. Choose an account, workspace if applicable, and a destination directory.
+1. Choose an account, workspace if applicable, a destination directory, and a batch target. The proposed default is about 100 source images.
 2. Sign in through the browser's normal controls, if the selected method needs a session.
-3. Discover available images and show the scope and any known coverage gaps.
-4. Download originals, retaining progress across interruptions.
-5. Verify local files and show a report of completed, failed, ambiguous, and missing items.
-6. Prepare a concrete cleanup plan listing the chats and separately saved files eligible for removal.
-7. Start that cleanup plan explicitly after reviewing it. Pause or stop at any time.
-8. Show archive results and cleanup results separately.
+3. Select a reachable batch and record its source identities before triggering any downloads. Show its scope and coverage gaps.
+4. Use native batch downloading where supported, track each individual download, and retain progress across interruptions.
+5. Verify the batch's files and show completed, failed, ambiguous, and missing items.
+6. Prepare a concrete cleanup plan for the fully verified image/file targets or containing chats. The selected interface and actual deletion semantics determine which kind is available.
+7. Start cleanup explicitly after reviewing its scope. Pause or stop at any time. Whether later batches require another confirmation or run under a single account-scoped authorization remains an interface decision.
+8. Reconcile cleanup outcomes, refresh the source, and check whether previously unseen items are now reachable.
+9. Repeat with another batch while the workflow makes progress. Show archive and cleanup results separately.
 
-Archive acquisition must finish for the selected run before its cleanup phase starts. A later acquisition run may retry unresolved items without repeating completed work.
+Acquisition and verification must finish for a batch before that batch's cleanup starts. The whole account need not be enumerated first. Keep each completed batch durable so a later batch or restarted run can retry unresolved items without repeating completed work.
+
+The batch size counts distinct source-image occurrences, not just unique file contents or download events. About 100 is a proposed working target, not an image-service limit. If chat deletion is needed, include every generated image in each selected chat, even when the batch grows beyond the target. A large chat may be downloaded in smaller chunks, but it cannot be deleted until its entire required inventory is verified.
 
 ## Acquisition requirements
 
 **R1 — Account isolation.** Bind each session and inventory to an explicit account and workspace. Verify the visible account identity before discovery and cleanup. Never carry a cleanup plan into another account or silently switch identities. An export or manually downloaded batch needs an explicit account assignment.
 
 **R2 — Coverage.** Enumerate source items with stable identifiers where available. Support long, lazy-loaded or virtualized lists without assuming that the first screen or visible sidebar is the complete collection. Discovering the same item through multiple surfaces must not increase the source-item count. Report the source and strength of completeness evidence. Exhausting a scroll list alone does not prove that historical images elsewhere are absent.
+
+The reported gallery stall is a known failure case. Track forward progress using newly discovered source items rather than scroll position, page height, or the number of currently rendered tiles. Persist discovered identifiers before any reload; use bounded recovery attempts and reconcile repeated items afterward. Distinguish discovery that is progressing, stalled, and complete for an explicitly supported scope. A responsive page with no new results is not evidence of completion.
+
+The leading proposal uses bounded batches of currently reachable items, then refreshes after verified cleanup. Test whether this exposes older unseen items; do not assume deletion repairs the gallery. After a refresh, identify items again rather than reusing scroll offsets or selection positions from the previous batch. Conversation-based discovery is a fallback because older images remain accessible there, but a chat sidebar or keyword search must not be assumed to enumerate all conversations. A stalled gallery does not by itself prevent cleanup of a separately and fully verified target under R9, but it cannot justify account-wide coverage claims.
 
 **R3 — Originals.** Preserve the bytes delivered by the source's original download mechanism. Do not substitute screenshots, canvas captures, or gallery thumbnails. Do not resize, recompress, strip embedded metadata, or convert formats. Establish how each supported source identifies the original variant; unknown variants remain unresolved. Matching dimensions or successfully decoding a file does not establish that it is the original.
 
@@ -55,11 +65,13 @@ Archive acquisition must finish for the selected run before its cleanup phase st
 
 **R7 — Minimal retained information.** The user-facing archive contains images. Keep only the operational information needed for resume, validation, and safe cleanup: account alias, source references, file paths, sizes, checksums, validation evidence, and action status. Do not retain prompts, chat transcripts, or chat titles in logs or filenames. Existing metadata inside original files remains intact.
 
+**R13 — Native batch accounting.** Track the expected source items and their corresponding downloads individually. A download starting is different from completing, and completion is different from passing local verification. Never infer the source-to-file mapping from event order, equal counts, or filenames alone. Reconcile interrupted downloads and browser restarts, ignore unrelated downloads, and block cleanup where the mapping remains ambiguous. An extension download monitor is one candidate; the integration and local file access mechanism remain undecided.
+
 ## Cleanup requirements
 
-**R8 — Exact targets.** Cleanup acts only on explicit targets in a reviewed plan. Deleting a containing conversation is acceptable, including loss of its text and other contents; surface that consequence in the plan. Never select a chat by its title alone. Account-wide “Delete all chats” is outside the initial cleanup scope.
+**R8 — Exact targets.** Cleanup acts only on explicit targets in a reviewed plan. Establish what any native selection-based deletion actually removes before using it. Deleting a containing conversation is acceptable, including loss of its text and other contents; surface that consequence in the plan. Never select a chat by its title alone. Account-wide “Delete all chats” is outside the initial cleanup scope.
 
-**R9 — Archive before deletion.** A conversation is eligible only when its generated-image inventory is complete for that conversation and every required image has passed original-source and local-integrity checks. Unknown outputs, unresolved branches, missing originals, and failed files block that conversation. Other fully verified conversations may appear in a plan with the exclusions clearly reported.
+**R9 — Archive before deletion.** Each target requires a verified source-to-file mapping and original-source and local-integrity checks. A conversation is eligible only when its generated-image inventory is complete for that conversation and every required image has passed those checks. Unknown outputs, unresolved branches, missing originals, and failed files block that conversation. Other fully verified targets may appear in a plan with the exclusions clearly reported.
 
 **R10 — Revalidation.** Before each destructive action, recheck account identity, target identity, local file checksums, and whether the remote target has acquired new image outputs since discovery. A changed target invalidates its plan entry. If a source cannot provide sufficient current coverage evidence, leave that target out of automated cleanup.
 
@@ -89,6 +101,12 @@ The project does not require stealth plugins, fingerprint spoofing, proxy rotati
 | Multiple accounts contain similar filenames or chat titles | Files and cleanup targets remain correctly isolated |
 | A chat contains several generations and edits | Every required original is accounted for before that chat is eligible |
 | A historical image is absent from the main gallery | The coverage report identifies the gap or discovers it through another supported surface |
+| The gallery stops at the same point after a refresh while older images still open in chats | Discovery reports the stall, retains its inventory, and assesses conversation-based discovery without claiming full-account completion |
+| A virtualized list replaces old tiles without increasing page height | Newly discovered identifiers still count as progress; repeated items do not |
+| A native batch starts 100 downloads, but one is interrupted | It remains incomplete; equal event and selection counts do not permit cleanup |
+| Download events complete in a different order from the selection | Source-to-file mappings remain correct |
+| A selected chat contains more than the batch target | All its required images are verified before that chat can be deleted |
+| Cleanup finishes but the refreshed gallery exposes no unseen items | Report lack of progress; do not claim that the account is empty |
 | An interrupted download leaves a partial file | It is never reported as complete or used to justify deletion |
 | The same completed run is repeated | Existing verified files are reused; distinct files are not overwritten |
 | A file is corrupted after acquisition | Reverification fails and dependent cleanup is blocked |

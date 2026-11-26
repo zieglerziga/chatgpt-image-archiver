@@ -20,11 +20,33 @@ The Library guide documents selecting one or more files for download and selecti
 
 **Project choice:** prefer native batches wherever they preserve original files and provide adequate coverage. Treat Images, saved files, and conversation contents as separate inventories linked by evidence, rather than assuming that their counts match.
 
+## Observed gallery discovery failure
+
+**User evidence:** scrolling loads more image rows until it stops. Refreshing and scrolling again stops around the same point. The page remains responsive. Images older than that stopping point can still be opened from their containing chats.
+
+**Conclusion:** the gallery currently omits some images that remain accessible to this user. The root cause is unconfirmed; a failed subsequent load, a problematic item, or a service-side listing boundary are hypotheses. This observation does not establish a numeric limit or prove that all older image downloads work.
+
+OpenAI documents finding older chats through search even when they are no longer visible in the sidebar. Regular and archived chats can appear in results; search matches words in titles or messages. This offers a way to locate known older chats, not a documented exhaustive inventory of all chats or images. [Finding your chats, projects, and files in ChatGPT](https://help.openai.com/en/articles/10056348-finding-your-chats-projects-and-files-in-chatgpt).
+
+**Fallback:** conversation-based discovery can reach known older images if the proposed batch loop cannot advance. Establish whether normal history navigation can enumerate conversations beyond the image-gallery boundary and whether each conversation exposes all its image outputs. Search can recover known items but cannot establish completeness without further evidence.
+
+## Native batch download and the proposed loop
+
+**User evidence:** with the download folder configured beforehand, selecting 500 images in Chrome triggered 500 individual downloads. Native multi-selection and downloading therefore work for the observed interface. The exact interface and its deletion controls remain to be identified. This is not an established maximum, a guarantee of original-file quality, or an independent verification of each resulting file.
+
+**User proposal:** work in batches of about 100 images, delete the finished batch, and iterate.
+
+**Leading approach:** reuse native batch downloading and add source-to-file accounting, completion monitoring, local verification, cleanup coordination, and durable progress. Test whether removing a verified batch and refreshing exposes older items without deep scrolling. If it does, exhaustive account discovery is not a prerequisite for processing each batch. That replenishment behavior is still a hypothesis.
+
+Chrome's extension downloads API can monitor downloads using its `downloads` permission. It distinguishes a download's creation from later state changes, including completion and interruption, and exposes download identifiers and filenames. This supports evaluating an extension monitor; it does not establish how ChatGPT source items map to downloads or provide local image validation by itself. [Chrome downloads API](https://developer.chrome.com/docs/extensions/reference/api/downloads).
+
+If cleanup requires deleting containing chats, batch sizing must include whole verified chats. If a native image selection also offers deletion, establish whether it deletes a saved file, only removes a gallery entry, or has other effects before choosing that route.
+
 ## Chat deletion
 
 OpenAI documents individual chat deletion and a native “Delete all chats” control. Deleted chats cannot be restored through ChatGPT or Support. Chat deletion does not remove separately saved Library or Space files. Removal from the account UI and permanent backend deletion are different events, with retention exceptions described by OpenAI. [Deleting and archiving chats in ChatGPT](https://help.openai.com/en/articles/8809935-deleting-and-archiving-chats-in-chatgpt).
 
-**Project choice:** targeted conversation deletion is acceptable to the user and is the initial cleanup unit. Native account-wide deletion could reduce work later, but requires an explicit account-wide scope and stronger coverage evidence than a successful subset download. It is excluded from the first version.
+**Project choice:** targeted conversation deletion is an acceptable cleanup route. Native selection-based image/file cleanup may be simpler if its controls and actual effects are established. Native account-wide deletion could reduce work later, but requires an explicit account-wide scope and stronger coverage evidence than a successful subset download. It is excluded from the first version.
 
 ## Browser automation and account risk
 
@@ -44,7 +66,7 @@ The following is an engineering assessment, not a claim that any method has alre
 
 | Approach | Potential benefit | Main unresolved issue | Current position |
 | --- | --- | --- | --- |
-| Native Library or Space batch download, followed by local verification | Smallest amount of custom acquisition work | Coverage of generated images, original variants, batch limits, and mapping to cleanup targets | First capability to check |
+| Native batch download, followed by local verification and repeated cleanup | Reuses the user's demonstrated Chrome workflow | Exact interface, original variants, source mapping, deletion semantics, and whether older items become reachable | Leading acquisition candidate; 500-item selection observed |
 | Custom extension in the existing browser | Uses the current browser session and could capture native download results | Browser-specific permissions, durable progress, UI changes, account isolation, terms risk | Candidate |
 | External visible browser controller | Can coordinate navigation, file verification, progress, and cleanup | CachyOS compatibility, login behavior, UI changes, terms risk | Candidate; Playwright is one possible tool |
 | Export recovery plus local import | Offline processing after a single official download | Previous delivery failure and unproven original-image coverage | Optional fallback |
@@ -54,11 +76,11 @@ Undocumented API scraping and stealth tooling are outside the proposed scope. Th
 
 ## Decisions still open
 
-1. Which surfaces contain the full accessible historical image collection on each account?
-2. Can native batch downloads cover enough of the collection to avoid a custom downloader?
+1. Which interface supplied the 500-item selection, and does it offer selection-based deletion?
+2. Does removing a verified batch and refreshing expose previously unreachable older items?
 3. If automation is needed, is an extension or an external controller the better fit for the installed browser and CachyOS environment?
 4. Which identifiers and variant mappings establish the original image and its containing chat?
-5. Can discovery establish sufficient completeness for automatic conversation cleanup, including alternate branches?
+5. Can discovery establish sufficient completeness for automatic conversation cleanup when needed, including alternate branches, and can conversation history serve as a fallback beyond the gallery boundary?
 6. Does the user prefer a CLI or a small local interface once the feasible workflow is known?
 
 These decisions belong to the feasibility stage. No language, framework, browser integration, or packaging format is committed yet.
