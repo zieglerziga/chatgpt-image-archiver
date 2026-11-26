@@ -1,6 +1,6 @@
 # Product specification
 
-Draft 0.3 — 2026-11-26
+Draft 0.4 — 2026-11-26
 
 ## Purpose
 
@@ -22,7 +22,9 @@ Recover the user's generated ChatGPT images onto a CachyOS Linux host, verify th
 | Firefox surface | Screenshot shows Space filtered to images, with selection-based Download and Delete controls |
 | Firefox outcome | User reports completion; selection is gone and images remain listed, making the downloaded source items difficult to identify |
 | Local inventory | 703 image files and no browser partial files observed; integrity and source correspondence not verified |
-| Current work | Specification and approach selection only |
+| Initial browser | ChatGPT app's connected in-app browser |
+| Later browser support | Chrome and other mainstream browsers; Firefox is a priority given the user's existing workflow |
+| Current work | Specifications and limited browser feasibility checks; no downloader application implementation |
 
 ## Scope
 
@@ -74,6 +76,8 @@ The leading proposal uses bounded batches of currently reachable items, then ref
 
 Give the user a local batch view showing pending, downloading, verified, unmatched, and removed items, with file references for review. It must explain which files belong to the batch even when the native page no longer remembers it. Importing an earlier download folder may establish a local inventory, but cannot by itself authorize deletion of unidentified source items. A future batch directory helps isolate files; it does not replace the manifest.
 
+The observed Space identity candidate is `data-library-selection-id`, containing a `libfile_...` value that also appears in its file link. Fifty tested identities survived refresh, and an exact two-item selection was restored after selection loss. The separate `data-library-selection-key` changed for all 50 tested items. These are observations of the current UI, not a documented compatibility guarantee; validate the identity mapping when binding a browser adapter.
+
 ## Cleanup requirements
 
 **R8 — Exact targets.** Cleanup acts only on explicit targets in a reviewed plan. Establish what any native selection-based deletion actually removes before using it. Deleting a containing conversation is acceptable, including loss of its text and other contents; surface that consequence in the plan. Never select a chat by its title alone. Account-wide “Delete all chats” is outside the initial cleanup scope.
@@ -88,9 +92,15 @@ Saved-file-only cleanup needs the exact file verified, not an exhaustive invento
 
 **R12 — Uncertain outcomes.** Record an attempted deletion durably before acting. After a timeout or crash, inspect the target before retrying; do not assume the action failed. Absence from a partial list, a login redirect, or an error page is insufficient evidence of deletion. Report confirmed UI removal separately from uncertain removal and from any provider retention period.
 
-## Browser behavior
+## Browser support and behavior
 
-If browser automation is selected, use normal visible UI controls and a session isolated for each account. Login, MFA, and access challenges remain user actions. Stop on access denial, rate-limit messages, account warnings, or unexpected destructive dialogs. Provide a clear resume path after the user resolves the interruption.
+Target the connected in-app browser first. The initial experience is an agent-assisted workflow within the ChatGPT app. The live inspection tools available in this session are not evidence that a standalone application can attach to the in-app browser; that integration and long-running execution need a separate capability check.
+
+Separate the browser adapter from the durable batch catalog, file validation, duplicate handling, and cleanup eligibility rules. Later adapters must consume the same batch records and report equivalent results. Prioritize Chrome after the initial target, include Firefox, and assess other Chromium-based browsers after Chrome compatibility is demonstrated. A different host OS is not required by this roadmap.
+
+Each adapter must establish source identities and selection state, navigate supported lists, correlate native downloads with source items and local files, restore exact selections, and report cleanup outcomes and interruptions. Missing capabilities must be reported explicitly. Batch state must survive beyond a browser tab, agent turn, or temporary tool handle. Honor host-required confirmations and takeovers; do not promise unattended execution before testing those constraints.
+
+Use normal visible UI controls and a session isolated for each account. Login, MFA, and access challenges remain user actions. Stop on access denial, rate-limit messages, account warnings, or unexpected destructive dialogs. Provide a clear resume path after the user resolves the interruption.
 
 The project does not require stealth plugins, fingerprint spoofing, proxy rotation, simulated identity changes, CAPTCHA bypass, or private endpoint replay. Pace operations for reliability and react to explicit service signals. No timing pattern can promise avoidance of account restrictions; see [the evidence notes](options-and-evidence.md#browser-automation-and-account-risk).
 

@@ -1,10 +1,16 @@
 # Feasibility plan
 
-Draft investigation plan — 2026-11-26. These are proposed future checks, not work already performed or authorization to operate accounts during specification drafting.
+Draft investigation plan — 2026-11-26. Completed checks are identified below; other stages remain proposed future work. No downloader application has been implemented.
 
 ## Decision to reach
 
-Choose the least complex approach that can recover the accessible original images reliably on CachyOS, then support correctly scoped cleanup. Establish the limits before building for thousands of files.
+Establish a reliable batch workflow in the ChatGPT app's connected in-app browser on CachyOS, then support correctly scoped cleanup. Keep the core independent of the browser so Chrome and Firefox adapters can follow. Establish the limits before building for thousands of files.
+
+## Completed identifier and selection check
+
+Live inspection of 50 rendered Space items found unique `data-library-selection-id` values matching their file links. All 50 identifier, filename, and link associations survived refresh; the separate selection keys changed. Two items selected by file identity were reselected exactly after another refresh cleared native selection. The test finished with selection cleared and performed no download or deletion.
+
+This establishes a working sample for identity-based selection recovery. Next validate source-to-download mapping, behavior beyond the initial rendered items, and durable continuation. Public test notes contain aggregate results rather than private file names or identifiers.
 
 ## Stage 1 — Account and interface inventory
 
@@ -16,11 +22,11 @@ Inspect normal web controls for individual download, multi-select download, indi
 
 ### Priority investigation — Repeated native batches
 
-The user reports a 500-image native Chrome batch and a later finished Firefox run. The Firefox screenshot establishes a Space image list with Download and Delete controls and 703 currently selected items; a local inventory subsequently found 703 image files. Selection disappeared after the run while the images remained listed. Matching the archived files to their source items and restoring the exact selection is now the first feasibility priority.
+The user reports a 500-image native Chrome batch and a later finished Firefox run. The Firefox screenshot establishes a Space image list with Download and Delete controls and 703 currently selected items; a local inventory subsequently found 703 image files. Selection disappeared after the run while the images remained listed. Sample selection recovery has now been demonstrated; matching archived files to source identities is the next feasibility priority.
 
 The proposed workflow targets about 100 images per batch, verifies and reconciles the batch, restores its verified source selection, removes those targets, refreshes, and repeats. This may avoid the gallery's scrolling boundary; exposing older items after deletion remains unproven.
 
-1. Establish stable Space item references and durably record a small selected set before Download. Demonstrate exact reselection after native selection is cleared, after reload, and after a list-order change. A first-N-rows strategy is insufficient.
+1. Extend the completed identity and two-item selection check to scrolling, list-order changes, and durable records across a browser or app restart. A first-N-rows strategy is insufficient.
 2. Establish how those source identities map to individual downloads despite different start/completion order, duplicate names, and unrelated browser downloads. Preserve the trigger-time batch set even if the current toolbar count changes.
 3. Validate native file quality and establish completion and local-verification signals. Do not treat the number of started downloads as proof that the batch is archived.
 4. During a later authorized controlled cleanup test, verify whether previously unseen items become reachable after removal and refresh. Perform deletion tests only after their required files are verified. Do not remove valuable content merely to diagnose scrolling.
@@ -55,9 +61,11 @@ Inspect how source identifiers connect gallery items, file downloads, saved copi
 | Images can be downloaded but completeness cannot be established for a chat | Support archival; keep that chat out of automatic cleanup |
 | Neither route covers historical cases | Document the shortfall and decide whether limited coverage is useful before implementing |
 
-If Playwright is shortlisted, first validate browser launch, normal manual sign-in, one original download, and restart on the actual CachyOS host. Prefer no extra infrastructure unless the host check shows a need.
+For a later external browser adapter, if Playwright is shortlisted, first validate browser launch, normal manual sign-in, one original download, and restart on the actual CachyOS host. Prefer no extra infrastructure unless the host check shows a need.
 
 **Output:** a short decision record selecting the integration, language/runtime, user interface, and any necessary host setup. Include the reasons and remaining limits.
+
+The initial browser target is already selected: the connected in-app browser. Validate that it can correlate native downloads with files on the local host, continue from persisted batch records, and handle interruptions and host-required confirmations. Do not treat a working interactive tool session as proof of a standalone attachment interface or unattended operation.
 
 ## Stage 4 — Define the implementation slices
 
@@ -70,6 +78,7 @@ Only after approach selection, prepare implementation work in this order:
 5. Cleanup plan generation, initially without executing it.
 6. Targeted cleanup and uncertain-outcome recovery, with archive checks enforced.
 7. Scale and usability validation against the acceptance criteria.
+8. Chrome and Firefox adapters using the same batch catalog and verification rules; assess other Chromium-based browsers afterward.
 
 The image archive is the deliverable. A small operational catalog may track source items, files, runs, and cleanup actions; its storage format is an implementation choice. Prompts and transcripts are unnecessary. Do not commit to a public file format or command interface before selecting the workflow.
 
@@ -84,15 +93,15 @@ Run a synthetic inventory of at least 10,000 items to assess progress persistenc
 ## Facts not yet established
 
 - Exact image count and distribution across accounts.
-- Installed browser and preferred account-switching workflow.
+- Account and workspace types and the preferred account-switching workflow.
 - Coverage of other accounts and of Library or Space beyond the observed gallery failure.
 - Whether conversation history can be enumerated reliably beyond the known gallery stopping point. The gallery is already known to omit some accessible older images.
 - Maximum native batch size, format coverage, and original-image integrity. Chrome 500 and a finished Firefox run with 703 locally inventoried images are observed outcomes, not measured limits.
 - What the observed Space Delete control actually removes and whether chat representations remain.
-- Stable source-to-file mapping and exact selection recovery after the observed Firefox selection loss.
+- Stable source-to-file mapping and selection recovery beyond the completed 50-item identity and two-item restoration sample.
 - Whether cleanup and refresh expose unseen items beyond the gallery boundary.
-- Whether stable source identifiers are exposed by the normal UI.
+- Identifier stability across deeper list traversal, reordering, other accounts, and later UI changes.
 - Behavior of hidden branches and separately saved copies.
-- Which integration works best on the user's CachyOS host.
+- Long-run and restart behavior of the chosen in-app integration, standalone attachment capabilities if needed, and the best later integration for Chrome and Firefox.
 
 These unknowns affect the approach, so they remain explicit instead of being replaced by assumptions in the requirements.

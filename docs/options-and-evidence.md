@@ -36,7 +36,7 @@ OpenAI documents finding older chats through search even when they are no longer
 
 The user subsequently reported that the Firefox run finished, its selection disappeared, and the images remained in the list. A read-only inspection of the local downloads directory found 703 image files totaling 1,717,714,337 bytes, with no `.part` or `.crdownload` files. That count agrees with the screenshot's visible selection count. It does not prove the exact trigger-time selection, original-file integrity, or source-to-file correspondence. The collection's previous folder contents were not recorded.
 
-**Observed failure:** the native workflow loses the record connecting a completed download batch to its source selection. Native downloading is available; identifying and reselecting precisely what was archived is the immediate feasibility question. No maximum batch size has been established.
+**Observed failure:** the native workflow loses the record connecting a completed download batch to its source selection. Native downloading is available; a later live check established sample selection recovery as described below. Matching archived files to that saved source selection remains unresolved. No maximum batch size has been established.
 
 **User proposal:** work in batches of about 100 images, delete the finished batch, and iterate.
 
@@ -44,9 +44,25 @@ The user subsequently reported that the Firefox run finished, its selection disa
 
 Chrome's extension downloads API can monitor downloads using its `downloads` permission. It distinguishes a download's creation from later state changes, including completion and interruption, and exposes download identifiers and filenames. This supports evaluating an extension monitor; it does not establish how ChatGPT source items map to downloads or provide local image validation by itself. [Chrome downloads API](https://developer.chrome.com/docs/extensions/reference/api/downloads).
 
-Firefox also documents a WebExtensions downloads API with download-manager queries and creation/change events. Both browsers remain candidates; native success does not prove that an automated integration behaves identically in each. [Mozilla downloads API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads).
+Firefox also documents a WebExtensions downloads API with download-manager queries and creation/change events. Chrome and Firefox are candidates for later adapters; native success does not prove that an automated integration behaves identically in each. [Mozilla downloads API](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/downloads).
 
 The screenshot confirms that native Space selection offers Delete. Its confirmation text, actual saved-file effects, and behavior after refresh still need observation. If cleanup requires deleting containing chats, batch sizing must include whole verified chats.
+
+## Live identifier and selection check
+
+An authorized feasibility check in the connected in-app browser on 2026-11-26 found 50 rendered Space items, each with a distinct `data-library-selection-id`. Each value matched the identifier in that item's normal `/space/file/libfile_...` link. All 50 identifier, filename, and link associations remained unchanged after refresh. The separate `data-library-selection-key` changed for all 50.
+
+The check then selected two items by their saved file identities, refreshed, confirmed that selection was cleared, and reselected exactly the same two identities. It finished with both test checkboxes cleared. The check performed inspection and temporary selection changes, with no downloads or deletion.
+
+**Result:** the current Space DOM exposes a usable identity candidate, and exact selection recovery worked for the tested sample. This does not establish full-account enumeration, behavior after deep scrolling or reordering, compatibility with other accounts, download-to-file mapping, or deletion effects. No account identifiers, file titles, or raw DOM captures are needed in the public specification.
+
+## Browser target decision
+
+**User decision:** target the ChatGPT app's connected in-app browser first; support Chrome and other mainstream browsers over time.
+
+**Initial shape:** an agent-assisted workflow in the existing app, using normal browser controls and a persistent local batch record. Keep browser-specific inspection, selection, download observation, and cleanup actions behind an adapter. Archive verification and cleanup eligibility remain independent of the browser. Chrome follows the initial target; Firefox is also a priority because the user already uses it. Other Chromium-based browsers can be evaluated afterward.
+
+**Integration limit:** successful inspection through this chat's browser tools establishes access in this session. It does not establish a public standalone attachment interface, background-service support, persistent control across app restarts, or uninterrupted long runs. Test those separately and honor the browser host's confirmation and takeover requirements.
 
 ## Chat deletion
 
@@ -75,8 +91,9 @@ The following is an engineering assessment, not a claim that any method has alre
 | Approach | Potential benefit | Main unresolved issue | Current position |
 | --- | --- | --- | --- |
 | Native batch download, followed by local verification and repeated cleanup | Reuses the demonstrated Chrome and Firefox workflows | Restoring selection from source identities, original variants, download mapping, deletion semantics, and whether older items become reachable | Leading candidate; Firefox Space controls observed and 703 local image files inventoried |
-| Custom extension in the existing browser | Uses the current browser session and could capture native download results | Browser-specific permissions, durable progress, UI changes, account isolation, terms risk | Candidate |
-| External visible browser controller | Can coordinate navigation, file verification, progress, and cleanup | CachyOS compatibility, login behavior, UI changes, terms risk | Candidate; Playwright is one possible tool |
+| Connected in-app browser adapter | Already supports direct DOM inspection and sample selection recovery in this chat | Download-to-file mapping, durable continuation, cleanup outcomes, host confirmations | Chosen initial browser target |
+| Custom extension in Chrome or Firefox | Uses the browser session and could capture native download results | Browser-specific permissions, durable progress, UI changes, account isolation, terms risk | Later adapter candidate |
+| External visible browser controller | Could coordinate a standalone browser workflow | CachyOS compatibility, integration, login behavior, UI changes, terms risk | Later candidate if standalone control is needed; no framework selected |
 | Export recovery plus local import | Offline processing after a single official download | Previous delivery failure and unproven original-image coverage | Optional fallback |
 | Existing third-party extension | Could avoid building acquisition features | Must verify source, permissions, file quality, coverage, maintenance, and cleanup behavior | No extension selected or audited |
 
@@ -84,11 +101,11 @@ Undocumented API scraping and stealth tooling are outside the proposed scope. Th
 
 ## Decisions still open
 
-1. Which stable Space item references can be saved before Download and matched to local files, so exact verified targets can be reselected after native selection disappears?
+1. How can the observed `libfile_...` identities be reliably correlated with native download results and verified local files?
 2. Does removing a verified batch and refreshing expose previously unreachable older items?
-3. If automation is needed, is an extension or an external controller the better fit for the installed browser and CachyOS environment?
+3. Can the chosen in-app browser support durable batch runs, and which integration should later Chrome and Firefox adapters use?
 4. Which identifiers and variant mappings establish the original image and its containing chat?
 5. Can discovery establish sufficient completeness for automatic conversation cleanup when needed, including alternate branches, and can conversation history serve as a fallback beyond the gallery boundary?
-6. Does the user prefer a CLI or a small local interface once the feasible workflow is known?
+6. What continuation, user interaction, and packaging are needed beyond the initial agent-assisted in-app workflow?
 
-These decisions belong to the feasibility stage. No language, framework, browser integration, or packaging format is committed yet.
+The initial browser target is selected. Language, framework, standalone integration, and packaging beyond the initial agent-assisted workflow remain open.
